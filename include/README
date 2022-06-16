@@ -1,0 +1,19 @@
+
+| Status |            |             |            |            |            |             |            | Auto | Manuel | Timed | Remote |
+|:------:|------------|-------------|------------|------------|------------|-------------|------------|:----:|:------:|:-----:|:------:|
+| 100    | Pin => 1,5 | Pout => 0,3 | Pin < 9    | Pin > Pout | DP > X     | Pout => 1,5 |            | +    | +      | +     | +      |
+| 101    | Pin > 0,1  | Pout < 0,3  | Pin < 9    | Pin > Pout |            |             |            | -    | -      | -     | -      |
+| 102    | Pin > Pout | Pout => 0,3 | Pin < 9    | Pout < 1,5 | DP > X     |             |            | +    | +      | +     | +      |
+| 103    | Pin <> 0   | Pout <> 0   | Pin < 9    | Pin > 1,5  | Pin > Pout | Pout => 1,5 | DP <= X    | +    | +      | +     | +      |
+| 104    | Pin <> 0   | Pout <> 0   | Pin < 9    | Pin > 1,5  | Pin = Pout | Pout => 1,5 | DP <= X    | -    | +      | -     | +      |
+| 105    | Pin < 1,5  | Pout < 1,5  | Pin = Pout | Pout > 0,3 | DP <= X    |             |            | +    | +      | +     | +      |
+| 106    | Pin < 1,5  | Pout < 1,5  | Pin > Pout | Pout > 0,3 | DP <= X    |             |            | +    | +      | +     | +      |
+| 107    | Pin => 0,1 | Pout => 0,1 | Pout > Pin |            |            |             |            | -    | +      | +     | +      |
+| 108    | Pin < 0,1  | Pout => 0,1 | Pout > Pin |            |            |             |            | -    | +      | +     | +      |
+| 109    | Pin => 9   | DP =< X     |            |            |            |             |            | -    | +      | -     | +      |
+| 110    | Pin => 9   | DP > X      |            |            |            |             |            | +    | +      | +     | +      |
+
+  Pin : Filter Input Pressure
+  Pout : Filter Output Pressure
+  DP : Filter Delta Pressure Pressure (DP = Pin - Pout)
+  X : Filter Clean Limit Pressure (DP)
