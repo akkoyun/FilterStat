@@ -101,7 +101,7 @@ void Console::Background_Color(Colors _Color) {
 }
 
 // Box Drawing Functions
-void Console::Draw_Box(uint8_t _X1, uint8_t _Y1, uint8_t _X2, uint8_t _Y2, char *_Text, uint8_t _Number, bool _Header, bool _Footer) {
+void Console::Draw_Box(uint8_t _X1, uint8_t _Y1, uint8_t _X2, uint8_t _Y2, String _Text, uint8_t _Number, bool _Header, bool _Footer) {
 
 	//Set Color
 	Text_Color(WHITE);
@@ -126,8 +126,8 @@ void Console::Draw_Box(uint8_t _X1, uint8_t _Y1, uint8_t _X2, uint8_t _Y2, char 
 	Text_Color(WHITE); Set_Cursor(_X1, _Y2 - 2); _Console->println(F("]"));
 
 	// Draw Footer
-	if (_Header == true) Draw_Box_Header(_X1, _Y1, _X2, _Y2);
-	if (_Footer == true) Draw_Box_Footer(_X1, _Y1, _X2, _Y2);
+	if (_Header) Draw_Box_Header(_X1, _Y1, _X2, _Y2);
+	if (_Footer) Draw_Box_Footer(_X1, _Y1, _X2, _Y2);
 
 }
 void Console::Draw_Box_Footer(uint8_t _X1, uint8_t _Y1, uint8_t _X2, uint8_t _Y2) {
