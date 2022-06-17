@@ -31,8 +31,6 @@
 #define __Pressure_Calibration_a__		(float)1.5777
 #define __Pressure_Calibration_b__		(float)-1.1925
 
-// Interval Definitions
-#define __Pressure_Measure_Interval__	(uint8_t)3
 
 
 
