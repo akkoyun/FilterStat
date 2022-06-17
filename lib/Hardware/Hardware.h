@@ -3,19 +3,6 @@
 #include <Arduino.h>
 #endif
 
-// Library Sound Definations
-#ifndef __Sounds__
-#include "Sounds.h"
-#endif
-
-// Library Console Definations
-#ifndef __Console__
-#include <Console.h>
-#endif
-
-// Define SD Card Library
-#include <SD.h>
-
 // Microcontroller Modules Hardware
 class Hardware {
 

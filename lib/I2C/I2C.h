@@ -8,41 +8,6 @@
 #include <Wire.h>
 #endif
 
-// Define RTC Library
-#ifndef __RV3028__
-#include <RV3028.h>
-#endif
-
-// Define Statistical Library
-#ifndef __Statistical__
-#include <Statistical.h>
-#endif
-
-// Define Environment Library
-#ifndef __Environment__
-#include <Environment.h>
-#endif
-
-// Define Battery Gauge Library
-#ifndef __MAX17055__
-#include <MAX17055.h>
-#endif
-
-// Define Battery Charger Library
-#ifndef __BQ24298__
-#include <BQ24298.h>
-#endif
-
-// Define Console Library
-#ifndef __Console__
-#include <Console.h>
-#endif
-
-// Define HMI Object
-#ifndef __dWin__
-#include <dWin.h>
-#endif
-
 // Define Objects
 dwin LCD_I2C;
 

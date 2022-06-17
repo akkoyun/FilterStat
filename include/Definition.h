@@ -31,79 +31,24 @@
 #define __Pressure_Calibration_a__		(float)1.5777
 #define __Pressure_Calibration_b__		(float)-1.1925
 
+// Include Library Deps.
+#include "Sounds.h"
+#include "Console_Parameters.h"
+#include <Console.h>
+#include <SD.h>
+#include <RV3028.h>
+#include <Statistical.h>
+#include <Environment.h>
+#include <MAX17055.h>
+#include <BQ24298.h>
+#include <dWin.h>
+#include <Telit_xE910.h>
+#include <ArduinoJson.h>
 
+// AVR Librarys
+#include <avr/interrupt.h>
 
-
-
-
-
-
-
-// Terminal Coordinates
-#ifdef TERMINAL
-
-	// Console Texts
-	#define _Console_OK_ "OK"
-	#define _Console_FAIL_ "FAIL"
-
-	// Version Information Coordinate
-	#define _Console_Version_X 6
-	#define _Console_Version_Y 69
-
-	// I2C Information Coordinate
-	#define _Console_I2C_Diagnostic_X 5
-	#define _Console_I2C_Diagnostic_Y 33
-
-
-
-
-	// SerialID Coordinate
-	#define _Console_SerialID_X 5
-	#define _Console_SerialID_Y 61
-
-	// Environment Coordinate
-	#define _Console_Environment_X 8
-	#define _Console_Environment_Y 70
-
-	// Battery Coordinate
-	#define _Console_Battery_X 5
-	#define _Console_Battery_Y 93
-
-	// TimeStamp Coordinate
-	#define _Console_TimeStamp_X 2
-	#define _Console_TimeStamp_Y 94
-
-	// State Coordinate
-	#define _Console_State_X 10
-	#define _Console_State_Y 74
-
-	// State Coordinate
-	#define _Console_Inputs_X 40
-	#define _Console_Inputs_Y 7
-
-	// Pressure Coordinate
-	#define _Console_Data_X 43
-	#define _Console_Data_Y 5
-
-#endif
-
-// Include PowerStat Definitions
+// Include FilterStat Definitions
 #include "Hardware.h"
 #include "I2C.h"
 #include "AI.h"
-
-// Include GSM Library
-#ifndef __Telit_xE910__
-#include <Telit_xE910.h>
-#endif
-
-// AVR Interrupt Library
-#include <avr/interrupt.h>
-
-// Define JSON Library
-#include <ArduinoJson.h>
-
-// Define HMI Object
-#ifndef __dWin__
-#include <dWin.h>
-#endif
