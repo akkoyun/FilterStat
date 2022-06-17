@@ -3,16 +3,6 @@
 #include <Arduino.h>
 #endif
 
-// Define HMI Object
-#ifndef __dWin__
-#include <dWin.h>
-#endif
-
-// Define Statistical Library
-#ifndef __Statistical__
-#include <Statistical.h>
-#endif
-
 // Define Objects
 dwin LCD_AI;
 Stream_Stats<float> Pressure_Input_Stats;
