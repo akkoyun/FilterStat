@@ -80,7 +80,7 @@ void Online_Routine(void) {
 		FilterStat.IoT.Online = GSM.Connect();
 
 		// Time Update
-		GSM.Time_Update();
+		if (GSM.Time_Update()) B100BB_I2C.Set_Time(GSM.Time.Day, GSM.Time.Month, GSM.Time.Year, GSM.Time.Hour, GSM.Time.Minute, GSM.Time.Second);
 
 		// Socket Config
 		Incomming_Socket.Configure();
