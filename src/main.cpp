@@ -109,9 +109,6 @@ void Recieve_Command(void) {
 		// Beep
 		Terminal.Beep();
 
-		// Print Command State
-		Terminal.Text(40, 20, CYAN, String(FilterStat.IoT.Remote_Command));
-
 		// Clear Interrupt
 		FilterStat.Interrupt.GSM_Interrupt = false;
 
