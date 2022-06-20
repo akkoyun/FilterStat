@@ -1,0 +1,966 @@
+# P511 Veri İletişim Protokolü
+
+STF Tarım için geliştirilmekte olan P511AA otomatik filtre kontrol donanımı 02.xx.xx versiyonu düzenlemesi ile birlikte hayata geçirilecek olan veri yapısı teknik detayları aşağıda detaylandırılmıştır. Diğer tüm STF projeleri ile birlikte yapılan planlama doğrultusunda her projeye ait ayrı bir "API End Point" olması uygun görülmüştür.
+
+## Veri Trafiği
+
+Otomatik filtre kontrol sistemi kurgu gereği çift yönlü veri trafiğine sahip bir sistemdir. Bu kurgu bünyesinde aşağıdaki koşullarda IoT veri transferi yapılacaktır. P511 donanım kurgusu sürekli uyanık sistem olarak oluşturulmuştur. Bu kurgu gereği sistem devamlı uyanık olarak bekleyecek (sulama başladığı durumlarda IoT online olacaktır) ve belirlenen koşullar oluşması durumunda veri transferi yapacaktır (sulama bittiği zaman IoT tekrar kendini kapatacaktır).
+
+Aşağıda detayları tanımlandığı şekilde her durum için veri paketleri tanımlanmıştır.
+
+| Paket Kodu  | Açıklama                                                                     |
+|------------|------------------------------------------------------------------------------|
+| [P511-P01](https://gist.github.com/akkoyun/b89b2d6d9ad01163e824b09f115805eb#p511aa-p01-veri-paketi) | Pompa çalışması ve sulamanın başlaması veri gönderimi                        |
+| [P511-P02](https://gist.github.com/akkoyun/b89b2d6d9ad01163e824b09f115805eb#p511aa-p04-veri-paketi) | Filtre temizleme işlemi sonucu veri gönderimi                                |
+| [P511-P03](https://gist.github.com/akkoyun/b89b2d6d9ad01163e824b09f115805eb#p511aa-p03-veri-paketi) | Sunucu tarafından güncelleme istenmesine cevap veri gönderimi                |
+| [P511-P04](https://gist.github.com/akkoyun/b89b2d6d9ad01163e824b09f115805eb#p511aa-p07-veri-paketi) | Sulama bitişi veri gönderimi                                                 |
+
+***
+
+## Gönderilen Veri Paketleri Yapısı
+
+### P511-P01 Veri Paketi
+
+Hat basıncının belirlenen seviyeyi aşlması durumunda (planlanan 0.2 Bar basınçtır fakat hat beslemesi yukarı doğru olan durumlarda pompa kapatıldığı an geri gelen su çıkış basıncının düşmesini engelleyebilecektir) sistemin sulama başlangıcını sunuculara göndermesi için oluşturulmuş veri paketidir. 
+
+**P01** veri paketi cihaz çalışma döngüsü içerisinde sistemin aktif olduğunu belirtir ilk veri paketi olduğı için eksiksiz olarak (tam paket) gönderilecektir. Paket içerisinde yer alan bazı sabit veriler (cihaza has sabitler) bu paket içersinde gönderilecek diğer paketlerde gönderilmeyecektir. 
+
+Bu paketin gönderilmesi durumunda sulama işleminin başladığı ve sistemin **Sulama Başladı** konumuna geçtiği tesbit edilecektir.
+
+#### P01 - Örnek Veri Paketi (Gönderen : P511)
+
+```json
+{
+	"Device": {
+		"Type": "511-P01",
+		"ID": "70A11D1D01000026",
+		"Hardware": "02.01.00",
+		"Firmware": "02.00.01",
+		"FilterCount": 3
+	},
+	"Power": {
+		"Battery": {
+			"AC": -0.15,
+			"FB": 2000,
+			"IB": 1300,
+			"IV": 4.17,
+			"SOC": 92.13,
+			"T": 0,
+			"Charge": 3,
+		}
+	},
+	"IoT": {
+		"GSM": {
+			"Module": {
+				"Firmware": "13.00.007",
+				"IMEI": "353613080341871",
+				"Manufacturer": 1,
+				"Model": 1,
+				"Serial": "0001767743"
+			},
+			"Operator": {
+				"Code": 28601,
+				"RSSI": 10
+			},
+			"SIM": {
+				"Iccid": "8990011916180288985",
+				"SIM_Type": 1
+			}
+		}
+	},
+	"Data": {
+		"TimeStamp": "2022-05-16  12:35:26",
+		"Event": 121,
+    }
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+**P01** veri paketine cevap olarak dönecek cevap paketi olan **R01** aşağıda tanımlanmıştır. 
+
+#### R01 - Örnek Veri Paketi (Gönderen : Sunucu)
+
+```json
+{
+	"Event": 560,
+	"Setting": {
+		"PumpLimit": 0.20,
+		"DeltaPressure": 0.30,
+		"TimedClean": 30,
+		"OnTime": 30,
+		"OffTime": 20
+	}
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+***
+
+### P511-P02 Veri Paketi
+
+P511 tarımsal filtre otomasyon sistemi aşağıdaki durumlarda sistem yıkama işlemini gerçekleştirmektedir.
+
+| Yıkama Tipi | Açıklama                                                                                                                |
+|-------------|-------------------------------------------------------------------------------------------------------------------------| 
+| Otomatik    | Sistem giriş ve çıkış basınçları arasında oluşan basınç farkı eşik değerden fazla ise sistem tarafından otomatik yıkama |
+| Zamanlı     | Sensör bozulma ihtimalleri doğrultusunda her t sürede bir sistem tarafından gerçekleştirilen yıkama                     |
+| Uzaktan     | IoT üzerinden kullanıcının manuel yıkama başlatması durumunda                                                           |
+| Manuel      | Sistem üzerinde bulunan manuel yıkama butonuna basılması durumunda                                                      |
+
+P511 sistemi yapısı gereği sürekli olarak giriş ve çıkış basıncını ölçmektedir (sulama durumunda her saniyede). Bu basınç değerleri ile giriş ve çıkış basınçları arasındaki farkı her ölçümde hesaplamaktadır (delta P). Bu parametreler doğrultusunda otomatik yıkama işlemlerine karar veren bir algoritma çalışmakta ve temizleme işlemine karar vermektedir.
+
+Bunun yanı sıra sensör arızaları durumu göz önünde bulundurularak zamanlı yıkama kararı da verilmektedir. Son yıkamadan sonra geçen süre x dk üzerinde olur ise sistem zamanlı yıkama prosedürü başlatmaktadır.Sistem ayrıca kullanıcı tarafından manuel yıkama istemlerini de dinlemektedir.
+
+Yıkama işlemi başlangıcında sistem giriş ve çıkış basınçlarını (Pin ve Pout) kaydetmekte, yıkama işlemi sırasında ise her kademe yıkama işlemi sonrası giriş ve çıkış basınçları ölçülmektedir. Tüm bu veri setleri paket içerisinde sunucuya gönderilmektedir.  
+
+Yıkama işlemi sonucunda (uzaktan, manuel, otomatik yada zamanlı) P02 veri paketi oluşturulmaktadır.
+
+Bu paketin gönderilmesi durumunda yıkama işleminin tamamlandığı ve sistemin **Yıkama Bitti** konumuna geçtiği tesbit edilecektir.
+
+#### P02 - Örnek Veri Paketi (Gönderen : P511)
+
+```json
+{
+	"Device": {
+		"Type": "511-P02",
+		"ID": "70A11D1D01000026"
+	},
+	"Power": {
+		"Battery": {
+			"AC": -0.15,
+			"FB": 2000,
+			"IB": 1300,
+			"IV": 4.17,
+			"SOC": 92.13,
+			"T": 0,
+			"Charge": 3,
+		}
+	},
+	"IoT": {
+		"GSM": {
+			"Operator": {
+				"Code": 28601,
+				"RSSI": 10
+			},
+		}
+	},
+	"Data": {
+		"TimeStamp": "2022-05-16  12:35:26",
+		"Event": 141,
+		"Status": 153,
+		"Pressure": {
+			"CleanStart": {
+				"StartTime": "2022-05-16  12:35:26",
+				"Pin": 8.123,
+				"Pout": 6.123
+			},
+			"CleanDetail": {
+				"Pin": [8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123],
+				"Pout": [8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123]
+			},
+			"CleanEnd": {
+				"EndTime": "2022-05-16  12:35:26",
+				"Pin": 8.123,
+				"Pout": 6.123
+			}
+		}
+    }
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+**P02** veri paketine cevap olarak dönecek cevap paketi olan **R02** aşağıda tanımlanmıştır. 
+
+#### R02 - Örnek Veri Paketi (Gönderen : Sunucu)
+
+```json
+{
+	"Event": 500
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+### P511-P03 Veri Paketi
+
+Sulama sistemi normal çalışma döngüsü içerisinde (herhangi bir filtre kirlenmesi olmadan, herhangi bir temizleme işlemi oluşmadan) P511 cihazı işlemcisi GSM veri trafiğini devamlı kontrol etmektedir. Bu kontrol sırasında sunucu tarafından bir güncelleme isteği gelmesi durumunda (istek paketi aşağıda verilmiştir) sistem anlık basınç değerlerini sunucuya gönderecektir. 
+
+Sistem GSM iot yapısı gereği sabit IP sistemdir. Bu sabit cihaz ID'si ve IP tablosu ile belirlenmiştir (IP hiçbir koşulda değişmemesi beklenmektedir).
+
+#### P03 - Örnek Veri Paketi (Gönderen : Sunucu)
+
+```json
+{
+	"Request": {
+		"Event": 262
+	}
+}
+```
+
+#### R03 - Örnek Veri Paketi (Gönderen : P511)
+
+```json
+{
+	"Device": {
+		"Type": "511-P03",
+		"ID": "70A11D1D01000026"
+	},
+	"Power": {
+		"Battery": {
+			"AC": -0.15,
+			"FB": 2000,
+			"IB": 1300,
+			"IV": 4.17,
+			"SOC": 92.13,
+			"T": 0,
+			"Charge": 3,
+		}
+	},
+	"IoT": {
+		"GSM": {
+			"Operator": {
+				"Code": 28601,
+				"RSSI": 10
+			},
+		}
+	},
+	"Data": {
+		"TimeStamp": "2022-05-16  12:35:26",
+		"Event": 260,
+		"Status": 153,
+		"Pressure": {
+			"Pin": 8.123,
+			"Pout": 6.123
+		}
+    }
+}
+```
+
+**R03** veri paketine (gelen istek) cevap olarak dönecek cevap paketi olan **P03** aşağıda tanımlanmıştır.
+
+
+
+
+
+
+
+
+
+	P03 veri paketi P83 istemi üzerine gönderilecektir.
+
+### P511-P04 Veri Paketi
+
+Hat basıncının belirlenen seviyenin altına düşmesi durumunda (planlanan 0.2 Bar basınçtır fakat hat beslemesi yukarı doğru olan durumlarda pompa kapatıldığı an geri gelen su çıkış basıncının düşmesini engelleyebilecektir.) sistemin sulama bitişi bilgisini sunuculara göndermesi için oluşturulmuş veri paketidir. 
+
+Bu paketin gönderilmesi durumunda sulama işleminin tamamlandığı ve sistemin **Sulama Bitti** konumuna geçtiği tesbit edilecektir.
+
+#### P04 - Örnek Veri Paketi (Gönderen : P511)
+
+```json
+{
+	"Device": {
+		"Type": "511-P04",
+		"ID": "70A11D1D01000026"
+	},
+	"Power": {
+		"Battery": {
+			"AC": -0.15,
+			"FB": 2000,
+			"IB": 1300,
+			"IV": 4.17,
+			"SOC": 92.13,
+			"T": 0,
+			"Charge": 3
+		}
+	},
+	"IoT": {
+		"GSM": {
+			"Operator": {
+				"Code": 28601,
+				"RSSI": 10
+			},
+		}
+	},
+	"Data": {
+		"TimeStamp": "2022-05-16  12:35:26",
+		"Event": 142
+    }
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+**P04** veri paketine (gönderilen) cevap olarak dönecek cevap paketi olan **R04** aşağıda tanımlanmıştır.
+
+
+
+
+
+
+#### R04 - Örnek Veri Paketi (Gönderen : Sunucu)
+
+```json
+{
+	"Event": 500
+}
+```
+
+	Değişken detayları aşağıda tanımlanmıştır.
+
+
+
+
+
+
+
+
+
+
+## Gönderilen Veri Paketi Değişken Yapısı
+
+IoT veri paketleri genel yapı itibari ile 4 ana segmentten oluşmaktadır. Bu segmentler şu şekildedir.
+
+* Device
+* Power
+* IoT
+* Data
+
+***
+
+### 1. Device
+
+Bu segment içerisinde cihaza ait üretim bilgilerinin olduğu datalar yer almaktadır.
+
+```json
+"Device": {
+	"Type": "511-P01",
+	"ID": "70A11D1D01000026",
+	"Hardware": "02.01.00",
+	"Firmware": "02.00.01",
+	"FilterCount": 3
+},
+```
+
+| Değişken    | Örnek Veri       | Değişken Tipi             | P01 | P02 | P03 | P04 |
+|-------------|------------------|---------------------------|-----|-----|-----|-----|
+| Type        | "511-P01"        | xxx-Pxx (String)          |  +  |  +  |  +  |  +  |
+| ID          | "FFFFFFFFFFFFFF" | 48+8 bit HEX (String)     |  +  |  +  |  +  |  +  |
+| Hardware    | "01.00.00"       | XX.XX.XX (String)         |  +  |  -  |  -  |  -  |
+| Firmware    | "01.00.00"       | XX.XX.XX (String)         |  +  |  -  |  -  |  -  |
+| FilterCount | 3                | Numeric (Max 16)          |  +  |  -  |  -  |  -  |
+
+#### 1.A. : “Type" : Veri Paketi Tipi
+
+Cihaz tarafından gönderilen veri tipini tanımlayan değerdir. İlk 3 basamak cihaz üretim kodunu, ardından gelen 3 basamak ise veri paketi tipini vermektedir
+
+| Paket Kodu | Açıklama                                                                     |
+|------------|------------------------------------------------------------------------------|
+| P511-P01   | Pompa çalışması ve sulamanın başlaması veri gönderimi                        |
+| P511-P02   | Filtre temizleme işlemi sonucu veri gönderimi                                |
+| P511-P03   | Sunucu tarafından güncelleme istenmesine cevap veri gönderimi                |
+| P511-P04   | Sulama bitişi veri gönderimi                                                 |
+
+#### 1.B. : “ID" : Cihaz ID Numarası
+
+Cihaza ait tekil id numarasıdır. Bu numara ile tüm veritabanı kayıt işlemleri indekslenecektir. Seri üretim cihazlarda (prototip ürünler için ek açıklama aşağıda belirtilmiştir) bu tekil veriyi sağlaması hemde her cihazın ayrı ayrı kodlanması iş yükünü getirmemek adına sistem içerisinde DS28C serial id çipi kullanılacaktır. Bu çip üzerinde fabrika çıkışı olarak kodlanmış 48 bit bir id bulunmaktadır. Elektronik sistemlerde genellikle veriler çip içerisinde bit olarak saklanmaktadır. Bu veriler okunduğu zaman HEX formatında okunmaktadır onluk sistemede çevrilebilecek olan bu id değişken taşması yaşamamak adına string olarak işleme alınmaktadır. DS28C çipi üzerinden onunan bu 48 bit id ye ek olarak 8 bit CRC verisi okunmaktadır. Polynomial “X8 + X5 + X4 + 1" doğrulama algoritması yardımı ile id doğrulaması yapılabilmektedir. Bu nedenle veri gönderimi yaparken 48+8 bit veri paketi HEX String formatında gönderilecektir.
+
+	Veri paketi toplam 14 byte uzunluğunda (hep aynı uzunlukta) HEX
+
+#### 1.C. : “Hardware" : Donanım Versiyonu
+
+Cihazın donanım tarafına ait tanımlayıcı versiyon bildirimidir. Majör ve minör versiyon yanı sıra (donanım versiyonu içerdiği modüllerde yer alan değişikliklere göre şekillenmektedir) üretim parti numarasını içermektedir. İlk 2 basamak **majör donanım versiyonu** sonraki 2 basamak ise **minör donanım versiyonu** bilgisini vermektedir. Son 2 basamak ise üretim parti numarasını içermektedir. Tüm bu versiyon yapısı GIT reposu üzerindeki release kodlarına aittir ve detayları repo üzerinde açıklanmıştır. XX.XX.XX yapısı şeklinde 8 byte string olarak gönderilmektedir (hep aynı uzunlukta).
+
+	Versiyon kodlama yapısı semantik kodlama sistemi üzerine kurgulanmıştır.
+
+#### 1.D. : “Firmware" : Yazılım Versiyonu
+
+Cihazın firmware tarafına ait tanımlayıcı versiyon bildirimidir. Majör, minör ve hata düzeltme durumlarını içermektedir. İlk 2 basamak **majör yazılım versiyonu** sonraki 2 basamak ise **minör yazılım versiyonu** bilgisini vermektedir. Son 2 basamak ise hata düzeltme kod versiyonu bilgisini içermektedir. Sistem yapı gereği uzaktan güncelleme yapılabilir bir sistem olması öngörüldüğü için firmware kodlaması önem teşkil etmektedir. Donanım versiyonuna göre hangi cihazların firmware güncellemesi yapılabileceği gibi bilgiler sistem üzerinde tutulacaktır. Cihazın istemesi durumunda firmware download edebilir olacaktır (sadece cihaz tarafından firmware download yapılabilecektir).
+
+#### 1.E. : “FilterCount" : Filtre Kademe Sayısı
+
+Filtre cihazları üzerinde cihaz özelliğine bağlı olarak birden fazla filtre olabilmektedir. P511 sistemi max 16 kademe olacak şekilde tasarlanmıştır. Bu kademe sayısı P511 üzerinde yer alan seçim anahtarları ile seçilmektedir. Bu veri P01 veri paketi ile sulamaya başlandığı zaman sunuculara gönderilmektedir. 
+
+***
+
+### 2. Power
+
+Geliştirilen donanımların tamamı batarya destekli sistemler olarak tasarlanmaktadır. Herhangi bir güç kaynağına bağlı olarak çalışsa bile güç kesilmesi durumunda sunuculara veri gönderebilmek için yeterli enerjiye sahip olmaları gerekmektedir. Bu nedenle tüm ürünler üzerinde Li-Ion batarya (ürün cinsine göre adedi ve gücü değişmektedir bu bilgi donanım versiyonu içerisinde yer alacaktır) kullanılmaktadır.
+
+Li-Ion bataryalar yapı gereği 3V8 nominal voltaj, 4V2 max voltaj ve 3V0 min voltaj olarak karakterize edilmektedir. Bu değerler teorik değerler olup ortam sıcaklığına göre değişmektedir. Düşük sıcaklıklar bir sorun değil bir avantajdır ve pil yaşlanmasını azaltır. Bununla beraber bataryaların 3V0 değerine düşmesi istenmeyen bir durumdur genellikle 3V2-3V4 aralığına düşmüş bataryalar boş olarak değerlendirilir.
+
+Bu kapsamda donanımlar üzerinde batarya şarj ve batarya ölçümleme sistemleri bulunmaktadır. Bu sistemler üzerinden alınan veriler hem anlık hem de ileri vade sürdürülebilirlik analizleri için kaydedilmelidir.
+
+Bu segment içerisinde cihaza ait güç parametreleri yer alamaktadır. Batarya durumu şarj bilgileri gibi parametreler bu alan içerisinde yer almaktadır. P101CA meteoroloji istasyonu güç kaynağı olarak sadece batarya kullanmaktadır ve bu batarya güneş paneli üzerinden şarj edilmektedir. Kaynak tek olduğu için (220v, adaptör, usb vb olmadığı için) güç segmenti içerisinde gereksiz kısımlar gönderilmemektedir.
+
+```json
+{
+	"Power": {
+		"Battery": {
+			"AC": -0.15,
+			"FB": 2000,
+			"IB": 1300,
+			"IV": 4.17,
+			"SOC": 92.13,
+			"T": 0,
+			"Charge": 3,
+		}
+	}
+}
+```
+
+| Değişken | Örnek Veri       | Değişken Tipi             | P01 | P02 | P03 | P04 | P05 | P06 | P07 |
+|----------|------------------|---------------------------|-----|-----|-----|-----|-----|-----|-----|
+| AC       | -51.72           | Float                     |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| FB       | 2000             | Integer                   |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| IB       | 718              | Integer                   |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| IV       | 3.89             | Float                     |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| SOC      | 17.97            | Float                     |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| T        | 25.43            | Float                     |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+| Charge   | 5                | Integer                   |  +  |  +  |  +  |  +  |  +  |  +  |  +  |
+
+#### 2.A. : “Battery"
+
+Sistem içerisinde kullanılmakta olan bataryaların anlık olarak takip edilmesi hem güvenlik hemde sürdürülebilirlik açısından önem teşkil etmektedir. Bu nedenle sistem içerisine MAX17055 batarya ölçüm sistematiği kurgulanmıştır. Bu sayede birçok batarya parametresini ölçümleyebilmekteyiz. Bu veri paketi içersinde analiz için gerekli önemli parametreler gönderilmektedir.
+
+#### 2.A.1. : “AC" : Ortalama Akım Tüketimi
+
+```json
+"AC": -51.72,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | AC                                              |
+| Değişken Tanımı | **A**verage **C**urrent (Ortalama Akım)         |
+| Değişken Tipi   | Float                                           |
+| Değişlen Birimi | mA                                              |
+| Örnek Veri      | -51.72                                          |
+
+Sistem güç katmanı üzerinde bulunan MAX17055 batarya ölçümleme çipi üzerinden ölçülen ortalama akım bilgisidir. Batarya ölçüm çipinin kullanılmasında ki birincil öncelik bu veridir (IV ile birlikte). Çip bataryaya bağlı kaldığı süre boyunca ölçümleme yapar ve bu verilerin ortalamalarını iç registerlarında tutar. Bu verinin negatif değer olması tüketim olduğunu (bataryadan güç çekimi), pozitif olması ise şarj olduğunu belirtmektedir (bataryaya doğru güç). Sonraki versiyonlarda akım değeri üzerinden güç analizleri ve batarya sağlığı konusunda analizler yapılabilecektir.
+
+#### 2.A.2. : “FB" : Tam Dolu Batarya Kapasitesi
+
+```json
+"FB": 2000,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | IB                                              |
+| Değişken Tanımı | **F**ull **B**attery (Tam Dolu Kapasite)        |
+| Değişken Tipi   | int                                             |
+| Değişlen Birimi | mAh                                             |
+| Örnek Veri      | 718                                             |
+
+Sistem güç katmanı üzerinde bulunan MAX17055 batarya ölçümleme çipi üzerinden ölçülen batarya tam dolu kapasite bilgisidir. Bu kapasite bilgisi mAh birimi üzerinden batarya döngüsüne göre anlık olarak hesaplanmaktadır. Herhangi bir harici kaynaktan set edilmemektedir. SOC değeri üzerinden bu veri değeri çarpılarak toplam kapasite bilgisine ulaşılabilmektedir bu nedenle FB değeri gönderilmemiştir.
+
+#### 2.A.3. : “IB" : Anlık Batarya Kapasitesi
+
+```json
+"IB": 718,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | IB                                              |
+| Değişken Tanımı | **I**nstant **B**attery (Anlık Kapasite)        |
+| Değişken Tipi   | int                                             |
+| Değişlen Birimi | mAh                                             |
+| Örnek Veri      | 718                                             |
+
+Sistem güç katmanı üzerinde bulunan MAX17055 batarya ölçümleme çipi üzerinden ölçülen batarya anlık kapasite bilgisidir. Bu kapasite bilgisi mAh birimi üzerinden batarya döngüsüne göre anlık olarak hesaplanmaktadır. Herhangi bir harici kaynaktan set edilmemektedir. SOC değeri üzerinden bu veri değeri çarpılarak toplam kapasite bilgisine ulaşılabilmektedir bu nedenle FB değeri gönderilmemiştir.
+
+#### 2.A.4. : “IV" : Anlık Batarya Voltajı
+
+```json
+"IV": 3.89,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | IV                                              |
+| Değişken Tanımı | **I**nstant **V**oltage (Anlık batarya voltajı) |
+| Değişken Tipi   | Float                                           |
+| Değişlen Birimi | Volt                                            |
+| Örnek Veri      | 3.89                                            |
+
+Sistem kurulu bataryasına ait anlık voltaj bilgilerini vermektedir. Sonraki versiyonlarda voltaj değeri üzerinden güç analizleri ve batarya sağlığı konusunda analizler yapılabilecektir. Kullanılan batarya voltaj alt ve üst limitleri kayıt sırasında kontrol edilebilir.
+
+#### 2.A.4. : “SOC" : Anlık Batarya Doluluk Oranı
+
+```json
+"SOC": 17.97,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | SOC                                             |
+| Değişken Tanımı | **S**tate **o**f **C**harge (Kapasite yüzdesi)  |
+| Değişken Tipi   | Float                                           |
+| Değişlen Birimi | %                                               |
+| Örnek Veri      | 17.97                                           |
+
+Sistem güç katmanı üzerinde bulunan MAX17055 batarya ölçümleme çipi üzerinden ölçülen batarya doluluk oranı bilgisidir. Batarya paketinin firmware üzerinde ayarlanmış kapasitesi ile anlık olarak ölçümlenen batarya kapasite oranı olarak hesaplanmaktadı. Bu hesap için batarya karakteristik eğrileri kullanılmakta ve lineer olmayan bir hesap ölçüm çipi tarafından anlık olarak yapılmaktadır.
+
+Bu değer UI tasarımlar içerisinde batarya durum bilgisi olarak direkt paylaşılabilir yapıdadır.
+
+#### 2.A.5. : “T" : Çip Sıcaklığı
+
+```json
+"T": 25.43,
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | T                                               |
+| Değişken Tanımı | **T**emperature (Anlık Çip Sıcaklığı)           |
+| Değişken Tipi   | Float                                           |
+| Değişlen Birimi | Santigrat                                       |
+| Örnek Veri      | 25.43                                           |
+
+Sistem güç katmanı üzerinde bulunan MAX17055 batarya ölçümleme çipi üzerinden ölçülen kart sıcaklığıdır. Sonraki versiyonlarda sıcaklık değeri üzerinden güç analizleri ve batarya sağlığı konusunda analizler yapılabilecektir.
+
+#### 2.A.6. “Charge" : Şarj Durumu
+
+```json
+Charge": 5
+```
+
+|                 | Açıklama                                        |
+|-----------------|-------------------------------------------------|
+| Değişken Adı    | Status                                          |
+| Değişken Tanımı | **Charge**r Status (Şarj durumu)                |
+| Değişken Tipi   | int                                             |
+| Değişlen Birimi | -                                               |
+| Örnek Veri      | 2 (1-6)                                         |
+
+BQ24298 şarj entegresi şarj durumlarını belirten 3 adet çıkışa sahiptir ve bu çıkışlar işlemci tarafından okunarak veri paketi ile birlikte sunuculara kaydedilmektedir. Bu sayede şarj durumu ile güç kaynaklı arıza durumları tesbit edilebilir hale getirilmiştir. Bu 3 çıkışın neleri ifade ettiği aşağıdaki tabloda belirtilmiştir.
+
+| Status ID | Durum           | Stat1 | Stat2 | PG    | Açıklama                                  |
+|-----------|-----------------|-------|-------|-------|-------------------------------------------|
+| 1         | Shutdown        | true  | true  | true  | Şarj icin gerekli olan güç beslemesi yok  |
+| 2         | Charging        | false | true  | false | Şarj oluyor                               |
+| 3         | Charge Complete | true  | false | false | Şarj tamamlandı                           |
+| 4         | Low Battery     | false | true  | true  | Düşük batarya voltajı                     |
+| 5         | No Battery      | true  | true  | false | Sisteme bağlı bir batarya yok             |
+| 6         | --              | -     | -     | -     | Tanımlanamayan durum                      |
+
+Bu veri alanı gerekli durumlarda UI üzerinde direkt olarak gösterilebilecektir (örneğin şarj oluyor ikonu).
+
+### 3. IoT
+
+Geliştirilen cihazların tamamı etkileşimli IoT cihazlar olarak tanımlanmaktadır. Bu nedenle veri paketi içerisinde iletişim alt parametrelerinin olduğu bir alan ihtiyacı doğmuştur. Cihaz bazında ek seçenekleri olmakla birlikte P511 cihazı GSM tabanlı bir IoT iletişim altyapısına sahiptir.
+
+IoT iletişim bloğuna ait cihaz tarafından gönderilen veri paketi aşağıdaki yapıdadır.
+
+```json
+{
+	"IoT": {
+		"GSM": {
+			"Module": {
+				"Firmware": "13.00.007",
+				"IMEI": "353613080341871",
+				"Manufacturer": 1,
+				"Model": 1,
+				"Serial": "0001767743"
+			},
+			"Operator": {
+				"Code": 28601,
+				"RSSI": 10
+			},
+			"SIM": {
+				"Iccid": "8990011916180288985",
+				"SIM_Type": 1
+			}
+		}
+	}
+}
+```
+
+| Değişken     | Örnek Veri            | Değişken Tipi             | P01 | P02 | P03 | P04 |
+|--------------|-----------------------|---------------------------|-----|-----|-----|-----|
+| Firmware     | "01.00.00"            | XX.XX.XX yapısında String |  +  |  -  |  -  |  -  |
+| IMEI         | "353613080341053"     | String                    |  +  |  -  |  -  |  -  |
+| Manufacturer | 1                     | Integer                   |  +  |  -  |  -  |  -  |
+| Model        | 1                     | Integer                   |  +  |  -  |  -  |  -  |
+| Serial       | 12345567890           | Integer                   |  +  |  -  |  -  |  -  |
+| Code         | 28601                 | Integer                   |  +  |  +  |  +  |  +  |
+| RSSI         | 32                    | Integer                   |  +  |  +  |  +  |  +  |
+| ICCID        | "8990011901130266075" | String                    |  +  |  -  |  -  |  -  |
+| SIM_Type     | 1                     | Integer                   |  +  |  -  |  -  |  -  |
+
+#### 3.A. : “GSM"
+
+P511 cihazı Telit firmasının üretmekte olduğu 2G altyapısına sahip haberleşme imkanı sunan GE910QUAD modemini barındırmaktadır. 2G şebeke kullanan en stabil modem olması nedeniyle bu model seçilmiştir ve 3G,LTE,5G bantlarını destekleyen xE910 ailesinin bir ürünüdür. Footprint değişikliği olmadan sadece modül değiştirerek bant seçimi yapılabilmektedir.
+
+#### 3.A.1. : “Module"
+
+Bu veri alanı GSM modeme ait fiziksel özellik değerlerini içermektedir.
+
+#### 3.A.1.1. : “Firmware"
+
+```json
+"Firmware": "01.06.01",
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Firmware                                             |
+| Değişken Tanımı | GSM Library **Firmware** (GE910 kütüphane versiyonu) |
+| Değişken Tipi   | String (8 Byte)                                      |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 01.06.11                                             |
+
+GSM IoT iletişime ait kütüphane tanımlayıcı versiyon bilgisidir. Majör, minör ve hata düzeltme durumlarını içermektedir. İlk 2 basamak **majör yazılım versiyonu** sonraki 2 basamak ise **minör yazılım versiyonu** bilgisini vermektedir. Son 2 basamak ise hata düzeltme kod versiyonu bilgisini içermektedir.
+
+#### 3.A.1.2. : "IMEI"
+
+```json
+"IMEI": "353613080341053"
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | IMEI                                                 |
+| Değişken Tanımı | GSM Modem **IMEI** Number (IMEI)                     |
+| Değişken Tipi   | String (15 Byte)                                     |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 353613080341053                                      |
+
+GSM Modemleri fiziksel olarak kayıt altına alabilmek ve devlet regülasyonuları için anahtar oluşturması için her GSM modemde olması gereken tekil 15 byte bir veridir. Bu id sayesinde modem satınalma parti vs gibi bilgiler takip edilebilmektedir.
+
+#### 3.A.1.3. : “Manufacturer"
+
+```json
+"Manufacturer": 1
+```
+
+GSM Modem üretici bilgisi.
+
+#### 3.A.1.4. : "Model"
+
+```json
+"Model": 1
+```
+
+GSM Modem model bilgisi.
+
+#### 3.A.1.5. : "Serial"
+
+```json
+"Serial": "0001767743"
+```
+
+GSM Modem seri numara bilgisi.
+
+#### 3.B.. : “Operator"
+
+GSM IoT sistemler içerisinde bir diğer önemli kısımda bağlantı ve operatör değişkenleridir. Bu alan altında GSM modem ile SIM üzerinde belirtilen operatöre bağlantı yapıldıktan sonra elde edişen veriler yer almaktadır.
+
+#### 3.B.1. : “Code"
+
+```json
+"Code": 28601,
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Code                                                 |
+| Değişken Tanımı | Operator **Code** (Operatör kodu)                    |
+| Değişken Tipi   | int                                                  |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 28601                                                |
+
+GSM in hangi operatöre bağlandığı bilgisidir. Her operatör için dünya genelinde hazırlanmış bir kod [listesi](https://www.mcc-mnc.com) mevcuttur. Türkiye için operatör listesi aşağıdaki gibidir.
+
+| Operator Code | Operator Adı |
+|---------------|--------------|
+| 28601         | Turkcell     |
+| 28602         | Vodafone     |
+| 28603         | Turk Telekom |
+| 28604         | Turk Telekom |
+
+#### 3.B.2. : “RSSI"
+
+```json
+“RSSI": 30,
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | RSSI                                                 |
+| Değişken Tanımı | **R**eceived **S**ignal **S**trength **I**ndicator (Sinyal gücü) |
+| Değişken Tipi   | int                                                  |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 30                                                   |
+
+Sistemi şebekeye bağlantı sinyal gücü hakkında bilgi vermektedir. dBm dönüşümü aşağıdaki şekilde yapılmaktadır.
+
+| RSSI  | dBm           | Açıklama                |
+|-------|---------------|-------------------------|
+| 0     | <= -113       |                         |
+| 1     | -111          |                         |
+| 2..30 | -109 <-> -53  | Her 1 basamak için 2dBm |
+| 31    | >= -51        |                         |
+| 99    |               | Tesbit edilemedi        |
+
+dBm için belirlenen sinyal çekim seviyesi 5 üzerinden aşağıdaki gibi hesaplanmaktadır (UI için çekim çubukları)
+
+| dBm                  | Seviye     | Açıklama                                |
+|----------------------|------------|-----------------------------------------|
+| >= -70 dBm           | Mükemmel   | Güçlü sinyal ve maksimum veri hızı      |
+| -70 dBm <-> -85 dBm  | Güzel      | Güçlü sinyal güçlü veri hızı            |
+| -86 dBm <-> -100 dBm | İyi        | Zayıf sinyal fakat kullanışlı veri hızı |
+| < -100 dBm           | Zayıf      | Zayıf sinyal problemli veri hızı        |
+| -110 dBm             | Kötü       | Kötü bağlantı kopma yaşanabilir         |
+
+#### 3.C.. : “SIM"
+
+GSM uygulamalarında şebekeye bağlanabilmek için bir SIM gerekmektedir. Bu SIM e ait hep sürdürülebilirlik hemde cihaz kimlik takibi yapabilmek amacı ile parametrelerin her veri paketinde gönderilmesi gerekmektedir. Bu veri alanı içerisinde SIM e ait sabitlerin değerleri içermektedir.
+
+#### 3.C.1. : “ICCID"
+
+```json
+"Iccid": "8990011901130266075"
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | ICCID                                                |
+| Değişken Tanımı | **I**ntegrated **C**ircuit **C**ard **I**dentifier   |
+| Değişken Tipi   | String (19/20 byte)                                  |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 8990011901130266075                                  |
+
+ICCID (Integrated Circuit Card Identifier) olarak bilinen kod numarası GSM şebekelerde telefon numarasının ve mobil operatör faturalandırma alt yapısı için kullanılan dünya genelinde tekil bir koddur. Sistemlerimiz içerisinde mobil operatör tarafında işlemlerin kolayca kontrol edilebilmesi amacı ile bu kod sistemlerimizde saklanacaktır.
+
+#### 3.C.2. : “SIM_Type"
+
+```json
+"SIM_Type": 1,
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | SIM_Type                                             |
+| Değişken Tanımı | SIM type                                             |
+| Değişken Tipi   | int                                                  |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 1 (1-3)                                              |
+
+Donanım katmanı üzerinde SIM farklı şekillerde sisteme eklenebilmektedir. Bu tipler aşağıdaki tabloda tanımlanmıştır.
+
+| SIM_Type | Açıklama                                                      |
+|----------|---------------------------------------------------------------|
+| 1        | Sim Tray e takılan fiziksel SIM kart (boyut önemi olmaksızın) |
+| 2        | MFF2 SIM chip                                                 |
+| 3        | Modüle gömülü embedded SIM                                    |
+
+***
+
+### 4- Data
+
+P511 sisteminin işlem verilerinin tamamını içerisinde barından veri paketi bölümüdür. Bu paket içerisinde işlem zamanı yanı sıra işlem verileri yer almaktadır. Bu işlem verileri her paket için farklı bir yapıda oluşturulmaktadır. Tüm iletişim paketi içerisindeki veriler sisteme ait değerler barındırırken bu alan ölçüm yapılacak işleme ait veriler barındırmaktadır.
+
+Data paket alanı içerisinde yer alan veriler yukarıda tanımlanan paket yapıları ile gönderilmektedir. Aşağıda tüm bu paket içi değişkenler detalı olarak tanımlanmıştır.
+
+#### 4.A. : “TimeStamp"
+
+```json
+"TimeStamp": "2020-10-23  14:18:28",
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | TimeStamp                                            |
+| Değişken Tanımı | Veri ölçümleme zamanına ait zaman etiketi            |
+| Değişken Tipi   | Date/Time                                            |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 2020-10-23  14:18:28                                 |
+
+Veri paketinin oluşum zamana ait zaman etiketidir.
+
+#### 4.B. : “Event"
+
+```json
+"Event": 111,
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Event                                                |
+| Değişken Tanımı | Sistemin veriyi gönderme sebebi                      |
+| Değişken Tipi   | int                                                  |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 191                                                  |
+
+Sistemin ölçümlemeyi hangi sebeple yapıp gönderdiğine ait durum değişkenidir. Aşağıdaki tabloda olası veri gönderim kaynakları tanımlanmıştır. Event veri kodlaması 3 basamaktan oluşan bir sistematik içerisinde kurulmuştur. Bu basamaklar:
+
+**Trigger** : Paketin oluşum sebebini tanımlayan basamaktır.
+**Type** : Yapılan işleme ait tanım basamağıdır.
+**Source** : Bu işlemin hangi kaynak ile oluşturulduğunu tanımlayan basamaktır.
+
+Bu segmentasyon doğruluk tablosu aşağıda verilmiştir.
+
+| Trigger     | Type       | Source          |
+|-------------|------------|-----------------|
+| 0-          | 0- OK      | 0- OK           |
+| 1- Event    | 1- IDLE    | 1- Pump         |
+| 2- Request  | 2- Start   | 2- Irrigation   |
+| 3-          | 3- Active  | 3- Auto Clean   |
+| 4-          | 4- Stop    | 4- Manuen Clean |
+| 5- Response | 5- Clean   | 5- Timed Clean  |
+| 6-          | 6- Update  | 6- Remote Clean |
+| 7-          | 7-         | 7-              |
+| 8-          | 8-         | 8-              |
+| 9- Error    | 9-         | 9-              |
+
+Sistem donanım kurgusu gereği cihaz üzerinde oluşan işlemlere göre veri paketi üretmektedir ve bu veri paketleri yukarıda detaylı olarak tanımlanmıştır.
+
+| Event            | Code |
+|------------------|------|
+| IDLE             | 100  |
+| Pump Start       | 121  |
+| Irrigation Start | 122  |
+| Update (manuel)  | 160  |
+| Update (request) | 260  |
+| Clean (auto)     | 153  |
+| Clean (manuel)   | 154  |
+| Clean (remote)   | 256  |
+| Clean (timed)    | 155  |
+
+#### 4.C. : “Status"
+
+```json
+"Event": 106,
+```
+Filtrenin çalışma koşullarını tanımlayan değişkendir. Giriş - çıkış basınçları ve diğer filtre parametrelerine göre hazırlanmış bir tablodur.
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Status                                               |
+| Değişken Tanımı | Filtre Durum Kodu                                    |
+| Değişken Tipi   | Integer                                              |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 200                                                  |
+
+**Status** kodları diğer bir değişle **filtre karar tablosu** ve bu koda karşılık gelen temizleme izinleri aşağıdaki tabloda belirtilmiştri. Aşağıda belirtilen kodlara ek olarak sistemin hiçbir işlem yapmaması durumunda **200** durum kodu tanımlanmıştır. 
+
+| Status |            |             |            |            |            |             |            | Auto | Manuel | Timed |
+|:------:|------------|-------------|------------|------------|------------|-------------|------------|:----:|:------:|:-----:|
+| 100    | Pin => 1,5 | Pout => 0,3 | Pin < 9    | Pin > Pout | DP > X     | Pout => 1,5 |            | +    | +      | +     |
+| 101    | Pin > 0,1  | Pout < 0,3  | Pin < 9    | Pin > Pout |            |             |            | -    | -      | -     |
+| 102    | Pin > Pout | Pout => 0,3 | Pin < 9    | Pout < 1,5 | DP > X     |             |            | +    | +      | +     |
+| 103    | Pin <> 0   | Pout <> 0   | Pin < 9    | Pin > 1,5  | Pin > Pout | Pout => 1,5 | DP <= X    | +    | +      | +     |
+| 104    | Pin <> 0   | Pout <> 0   | Pin < 9    | Pin > 1,5  | Pin = Pout | Pout => 1,5 | DP <= X    | -    | +      | -     |
+| 105    | Pin < 1,5  | Pout < 1,5  | Pin = Pout | Pout > 0,3 | DP <= X    |             |            | +    | +      | +     |
+| 106    | Pin < 1,5  | Pout < 1,5  | Pin > Pout | Pout > 0,3 | DP <= X    |             |            | +    | +      | +     |
+| 107    | Pin => 0,1 | Pout => 0,1 | Pout > Pin |            |            |             |            | -    | +      | +     |
+| 108    | Pin < 0,1  | Pout => 0,1 | Pout > Pin |            |            |             |            | -    | +      | +     |
+| 109    | Pin => 9   | DP =< X     |            |            |            |             |            | -    | +      | -     |
+| 110    | Pin => 9   | DP > X      |            |            |            |             |            | +    | +      | +     |
+
+  - Pin : Filter Input Pressure
+  - Pout : Filter Output Pressure  
+  - DP : Filter Delta Pressure Pressure (DP = Pin - Pout)
+
+#### 4.D. : “Pin"
+
+```json
+"Pin": 8.123,
+```
+
+Pompadan filtreye giren sulama hattına ait basınç değeridir. Bu basınç değeri P511 sistemi üzerinde bulunan basınç sensörü ve I2C ADC dönüştürücü sayesinde ölçümlenmektedir. Çoklu ölçüm yapılarak değerin stabil olması sağlanmaktadır.
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Pin                                                  |
+| Değişken Tanımı | Filtre Giriş Basıncı                                 |
+| Değişken Tipi   | Float                                                |
+| Değişlen Birimi | Bar                                                  |
+| Örnek Veri      | 8.123                                                |
+
+#### 4.E. : “Pout"
+
+```json
+"Pout": 7.123,
+```
+Filtreden çıkan sulama hattına ait basınç değeridir. Bu basınç değeri P511 sistemi üzerinde bulunan basınç sensörü ve I2C ADC dönüştürücü sayesinde ölçümlenmektedir. Çoklu ölçüm yapılarak değerin stabil olması sağlanmaktadır.
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Pout                                                 |
+| Değişken Tanımı | Filtre Çıkış Basıncı                                 |
+| Değişken Tipi   | Float                                                |
+| Değişlen Birimi | Bar                                                  |
+| Örnek Veri      | 8.123                                                |
+
+#### 4.F. : StartTime"
+
+```json
+"StartTime": "2020-10-23  14:18:28",
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | StartTime                                            |
+| Değişken Tanımı | Yıkama başlama zamanına ait zaman etiketi            |
+| Değişken Tipi   | Date/Time                                            |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 2020-10-23  14:18:28                                 |
+
+Yıkama işlemi başlama zamana ait zaman etiketidir.
+
+#### 4.G. : EndTime"
+
+```json
+"EndTime": "2020-10-23  14:18:28",
+```
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | EndTime                                              |
+| Değişken Tanımı | Yıkama bitiş zamanına ait zaman etiketi              |
+| Değişken Tipi   | Date/Time                                            |
+| Değişlen Birimi | -                                                    |
+| Örnek Veri      | 2020-10-23  14:18:28                                 |
+
+Yıkama işlemi bitiş zamana ait zaman etiketidir.
+
+#### 4.H. : CleanDetail - “Pin"
+
+```json
+"Pin": [8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123],
+```
+
+Pompadan filtreye giren sulama hattına ait basınç değeridir. Bu basınç değeri P511 sistemi üzerinde bulunan basınç sensörü ve I2C ADC dönüştürücü sayesinde ölçümlenmektedir. Çoklu ölçüm yapılarak değerin stabil olması sağlanmaktadır.
+
+Dizi değerinin herbir verisi filtre kademeleri yıkanması sonrası ölçülen veri değerleridir.
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Pin                                                  |
+| Değişken Tanımı | Filtre Giriş Basıncı                                 |
+| Değişken Tipi   | Float                                                |
+| Değişlen Birimi | Bar                                                  |
+| Örnek Veri      | 8.123                                                |
+
+#### 4.J. : CleanDetail - “Pout"
+
+```json
+"Pout": [8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123,8.123]
+```
+Filtreden çıkan sulama hattına ait basınç değeridir. Bu basınç değeri P511 sistemi üzerinde bulunan basınç sensörü ve I2C ADC dönüştürücü sayesinde ölçümlenmektedir. Çoklu ölçüm yapılarak değerin stabil olması sağlanmaktadır.
+
+Dizi değerinin herbir verisi filtre kademeleri yıkanması sonrası ölçülen veri değerleridir.
+
+|                 | Açıklama                                             |
+|-----------------|------------------------------------------------------|
+| Değişken Adı    | Pout                                                 |
+| Değişken Tanımı | Filtre Çıkış Basıncı                                 |
+| Değişken Tipi   | Float                                                |
+| Değişlen Birimi | Bar                                                  |
+| Örnek Veri      | 8.123                                                |

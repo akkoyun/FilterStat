@@ -109,6 +109,9 @@ void Recieve_Command(void) {
 		// Beep
 		Terminal.Beep();
 
+		// Buzzer
+		B100BB_Hardware.Buzzer(S_SUPER_HAPPY);
+
 		// Clear Interrupt
 		FilterStat.Interrupt.GSM_Interrupt = false;
 
@@ -477,6 +480,9 @@ void setup() {
 	B100BB_AI.Parameters.Clean.Defaults.Interval = 300;
 	B100BB_AI.Parameters.Irrigation.Limit.Start_Limit = 0.2;
 	B100BB_AI.Parameters.Irrigation.Limit.End_Limit = 0.2;
+
+	B100BB_AI.Parameters.Clean.Defaults.On_Interval = 5;
+	B100BB_AI.Parameters.Clean.Defaults.Off_Interval = 3;
 
 	// Set Selenoids OFF
 	B100BB_I2C.Clear_Selenoid(B100BB_Hardware.Module.Setting.Filter_Count);

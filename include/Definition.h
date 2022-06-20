@@ -8,7 +8,7 @@
 //#define HMI
 
 // Define Version Parameters
-#define	__PowerStat_Firmware__			"02.02.01"
+#define	__PowerStat_Firmware__			"02.02.03"
 #define	__PowerStat_Hardware__			"03.00.00"
 
 // Serial Communications Definations
