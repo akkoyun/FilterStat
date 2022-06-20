@@ -7,17 +7,6 @@
 #include "Definition.h"
 #include "Parameters.h"
 
-// Declare Objects
-Hardware B100BB_Hardware;
-I2C B100BB_I2C;
-AI B100BB_AI;
-//dwin LCD;
-
-// Define IoT Object
-Telit_xE910 GSM;
-GSM_Socket_Incomming Incomming_Socket((uint8_t)2);
-GSM_Socket_Outgoing Outgoing_Socket((uint8_t)3, FilterStat.IoT.Server_IP, FilterStat.IoT.Server_EndPoint);
-
 // Time Functions
 void Update_UNIX_Time(void) {
 
