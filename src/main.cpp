@@ -5,31 +5,7 @@
 
 // Include PowerStat Definitions
 #include "Definition.h"
-
-// Declare Global Variable
-struct FilterStat_Struct {
-
-	// Interrupt Variables
-	struct Interrupt_Struct {
-		bool Interrupt_Enable = false;
-		bool Pressure_Measurement = false;
-		bool Handle_Status = false;
-		bool Handle_Clean = false;
-		bool UNIX_Time_Update = false;
-		bool RTC_Timer_Interrupt = false;
-		bool GSM_Interrupt = false;
-	} Interrupt;
-
-	// GSM Variables
-	struct IoT_Struct {
-		char Server_IP[15] = "54.216.226.171";
-		char Server_EndPoint[15] = "/api/v1.1/p402";
-		bool Online = false;
-		uint16_t Remote_Command = 0;
-		char JSON[650];
-	} IoT;
-
-} FilterStat;
+#include "Parameters.h"
 
 // Declare Objects
 Hardware B100BB_Hardware;
@@ -127,12 +103,13 @@ void Filter_Clean(void) {
 
 	// Terminal Update
 	#ifdef TERMINAL
-		Terminal.Text(48, 3, GREEN, "                                                  ");
+		Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "                                                  ");
 
 		// Print Clean Text
-		if (B100BB_AI.Parameters.Status.Clean_Type == 1) Terminal.Text(48, 105, YELLOW, "   Auto   ");
-		if (B100BB_AI.Parameters.Status.Clean_Type == 2) Terminal.Text(48, 105, YELLOW, "  Timed   ");
-		if (B100BB_AI.Parameters.Status.Clean_Type == 3) Terminal.Text(48, 105, YELLOW, "  Remote  ");
+		if (B100BB_AI.Parameters.Status.Clean_Type == 1) Terminal.Text(_Console_Message_Short_X, _Console_Message_Short_Y, YELLOW, "   Auto   ");
+		if (B100BB_AI.Parameters.Status.Clean_Type == 2) Terminal.Text(_Console_Message_Short_X, _Console_Message_Short_Y, YELLOW, "  Timed   ");
+		if (B100BB_AI.Parameters.Status.Clean_Type == 3) Terminal.Text(_Console_Message_Short_X, _Console_Message_Short_Y, YELLOW, "  Remote  ");
+
 	#endif
 
 	// Clear RTC Timer
@@ -280,11 +257,11 @@ void Filter_Clean(void) {
 
 		// Terminal Update
 		#ifdef TERMINAL
-			Terminal.Text(48, 3, GREEN, "                                                  ");
-			Terminal.Text(48, 3, GREEN, "Selenoid    is Openening");
+			Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "                                                  ");
+			Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "Selenoid    is Openening");
 			char Selenoid_ID_On[3];
 			sprintf(Selenoid_ID_On, "%02hhu", i);
-			Terminal.Text(48, 12, YELLOW, String(Selenoid_ID_On));
+			Terminal.Text(_Console_Message_X, _Console_Message_Y + 9, YELLOW, String(Selenoid_ID_On));
 			Terminal.Text(35, ((i * 6) - 2), GREEN, "   ");
 		#endif
 
@@ -334,11 +311,11 @@ void Filter_Clean(void) {
 
 		// Terminal Update
 		#ifdef TERMINAL
-			Terminal.Text(48, 3, GREEN, "                                                  ");
-			Terminal.Text(48, 3, GREEN, "Selenoid    is Closing");
+			Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "                                                  ");
+			Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "Selenoid    is Closing");
 			char Selenoid_ID_Off[3];
 			sprintf(Selenoid_ID_Off, "%02hhu", i);
-			Terminal.Text(48, 12, YELLOW, String(Selenoid_ID_Off));
+			Terminal.Text(_Console_Message_X, _Console_Message_Y + 9, YELLOW, String(Selenoid_ID_Off));
 			Terminal.Text(35, ((i * 6) - 2), GREEN, "   ");
 		#endif
 
@@ -405,7 +382,7 @@ void Filter_Clean(void) {
 
 	// Terminal Update
 	#ifdef TERMINAL
-		Terminal.Text(48, 3, GREEN, "                                                  ");
+		Terminal.Text(_Console_Message_X, _Console_Message_Y, GREEN, "                                                  ");
 	#endif
 
 	// Clear Clean Variable

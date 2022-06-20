@@ -83,23 +83,23 @@ class AI {
 
 				// Print Input Pressure
 				if (this->Parameters.Pressure.Input < 0) {
-					Terminal.Text(34, 109, RED, String(-1 * this->Parameters.Pressure.Input, 3));
+					Terminal.Text(_Console_Pressure_X + 2, _Console_Pressure_Y, RED, String(-1 * this->Parameters.Pressure.Input, 3));
 				} else {
-					Terminal.Text(34, 109, CYAN, String(this->Parameters.Pressure.Input, 3));
+					Terminal.Text(_Console_Pressure_X + 2, _Console_Pressure_Y, CYAN, String(this->Parameters.Pressure.Input, 3));
 				}
 
 				// Print Output Pressure
 				if (this->Parameters.Pressure.Output < 0) {
-					Terminal.Text(35, 109, RED, String(-1 * this->Parameters.Pressure.Output, 3));
+					Terminal.Text(_Console_Pressure_X + 3, _Console_Pressure_Y, RED, String(-1 * this->Parameters.Pressure.Output, 3));
 				} else {
-					Terminal.Text(35, 109, CYAN, String(this->Parameters.Pressure.Output, 3));
+					Terminal.Text(_Console_Pressure_X + 3, _Console_Pressure_Y, CYAN, String(this->Parameters.Pressure.Output, 3));
 				}
 
 				// Print Delta Pressure
 				if (this->Parameters.Pressure.Delta < 0) {
-					Terminal.Text(32, 109, RED, String(-1 * this->Parameters.Pressure.Delta, 3));
+					Terminal.Text(_Console_Pressure_X, _Console_Pressure_Y, RED, String(-1 * this->Parameters.Pressure.Delta, 3));
 				} else {
-					Terminal.Text(32, 109, CYAN, String(this->Parameters.Pressure.Delta, 3));
+					Terminal.Text(_Console_Pressure_X, _Console_Pressure_Y, CYAN, String(this->Parameters.Pressure.Delta, 3));
 				}
 
 			#endif
@@ -421,13 +421,13 @@ class AI {
 			#ifdef TERMINAL
 
 				// Print Device Status
-				Terminal.Text(40, 114, GREEN, String(this->Parameters.Status.Device));
+				Terminal.Text(_Console_Status_X, _Console_Status_Y, GREEN, String(this->Parameters.Status.Device));
 
 				// Print Irrigation Status
-				Terminal.Text(43, 116, (this->Parameters.Status.Irrigation ? CYAN : RED), (this->Parameters.Status.Irrigation ? "X" : "-"));
+				Terminal.Text(_Console_Status_X + 3, _Console_Status_Y + 2, (this->Parameters.Status.Irrigation ? CYAN : RED), (this->Parameters.Status.Irrigation ? "X" : "-"));
 
 				// Print Irrigation Status Text
-				if (this->Parameters.Status.Clean_Type == 0) Terminal.Text(48, 105, (this->Parameters.Status.Irrigation ? GREEN : RED), F("IRRIGATION"));
+				if (this->Parameters.Status.Clean_Type == 0) Terminal.Text(_Console_Status_X + 8, _Console_Status_Y + 9, (this->Parameters.Status.Irrigation ? GREEN : RED), F("IRRIGATION"));
 
 			#endif
 

@@ -345,7 +345,7 @@ class Hardware {
 
 			// Print Diagnostic
 			#ifdef TERMINAL
-				Terminal.Text(39, 115, YELLOW, String(this->Module.Setting.Filter_Count));
+				Terminal.Text(_Console_Rotary_X, _Console_Rotary_Y, YELLOW, String(this->Module.Setting.Filter_Count));
 			#endif
 
 		}
@@ -359,9 +359,9 @@ class Hardware {
 			// Print Diagnostic
 			#ifdef TERMINAL
 				if (this->Module.Setting.HydroSyclone) {
-					Terminal.Text(42, 116, CYAN, "X");
+					Terminal.Text(_Console_HydroSyclone_X, _Console_HydroSyclone_Y, CYAN, "X");
 				} else {
-					Terminal.Text(42, 116, CYAN, "-");
+					Terminal.Text(_Console_HydroSyclone_X, _Console_HydroSyclone_Y, CYAN, "-");
 				}
 			#endif
 
@@ -374,9 +374,9 @@ class Hardware {
 			// Print Diagnostic
 			#ifdef TERMINAL
 				if (this->Module.Setting.Stabiliser) {
-					Terminal.Text(41, 116, CYAN, "X");
+					Terminal.Text(_Console_Stabilizer_X, _Console_Stabilizer_Y, CYAN, "X");
 				} else {
-					Terminal.Text(41, 116, CYAN, "-");
+					Terminal.Text(_Console_Stabilizer_X, _Console_Stabilizer_Y, CYAN, "-");
 				}
 			#endif
 

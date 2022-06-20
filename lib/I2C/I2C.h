@@ -589,23 +589,6 @@ class I2C {
 					Terminal.Text(_Console_Battery_X + 6, _Console_Battery_Y + 20, CYAN, String(Network.Battery.Charge_Cycle));
 				#endif
 
-				// HMI Output
-				#ifdef HMI
-
-					// Define Variable
-					uint8_t _Bat_Level = 0;
-
-					// Decide Level
-					if (this->Network.Battery.State_Of_Charge >= 0 and this->Network.Battery.State_Of_Charge < 20 ) _Bat_Level = 1;
-					if (this->Network.Battery.State_Of_Charge >= 20 and this->Network.Battery.State_Of_Charge < 40 ) _Bat_Level = 2;
-					if (this->Network.Battery.State_Of_Charge >= 40 and this->Network.Battery.State_Of_Charge < 60 ) _Bat_Level = 3;
-					if (this->Network.Battery.State_Of_Charge >= 60 and this->Network.Battery.State_Of_Charge < 80 ) _Bat_Level = 4;
-					if (this->Network.Battery.State_Of_Charge >= 80 and this->Network.Battery.State_Of_Charge <= 100 ) _Bat_Level = 5;
-
-					LCD_I2C.Set_HMI_Battery(_Bat_Level, this->Network.Battery.Instant_Voltage, this->Network.Battery.Temperature, this->Network.Battery.Average_Current, this->Network.Battery.State_Of_Charge, this->Network.Battery.Design_Capacity, this->Network.Battery.Instant_Capacity);
-				
-				#endif
-
 			}
 
 		}
@@ -639,7 +622,7 @@ class I2C {
 
 				// Terminal Update
 				#ifdef TERMINAL
-					Terminal.Text(2, 13, WHITE, String(this->Network.Time.UNIX));
+					Terminal.Text(_Console_UNIX_Time_X, _Console_UNIX_Time_Y, WHITE, String(this->Network.Time.UNIX));
 				#endif
 
 			}
