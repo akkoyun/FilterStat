@@ -32,15 +32,8 @@
 #define __Pressure_Calibration_b__		(float)-1.1925
 
 // Include Library Deps.
-#include "Sounds.h"
 #include "Console_Parameters.h"
 #include <Console.h>
-#include <SD.h>
-#include <RV3028.h>
-#include <Statistical.h>
-#include <Environment.h>
-#include <MAX17055.h>
-#include <BQ24298.h>
 #include <dWin.h>
 #include <Telit_xE910.h>
 #include <ArduinoJson.h>

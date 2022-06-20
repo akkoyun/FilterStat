@@ -3,6 +3,10 @@
 #include <Arduino.h>
 #endif
 
+// Include Libraries
+#include "Sounds.h"
+#include <SD.h>
+
 // Microcontroller Modules Hardware
 class Hardware {
 

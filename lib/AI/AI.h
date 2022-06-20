@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #endif
 
+// Define Library
+#include <Statistical.h>
+
 // Define Objects
 dwin LCD_AI;
 Stream_Stats<float> Pressure_Input_Stats;

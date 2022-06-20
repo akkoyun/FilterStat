@@ -8,6 +8,13 @@
 #include <Wire.h>
 #endif
 
+// Define Library
+#include <RV3028.h>
+#include <Statistical.h>
+#include <Environment.h>
+#include <MAX17055.h>
+#include <BQ24298.h>
+
 // Define Objects
 dwin LCD_I2C;
 
@@ -21,10 +28,11 @@ class I2C {
 		void Device_TCA9548(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_TCA9548__);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_TCA9548__);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Multiplexer = I2C_Device.Detect();
+			this->Network.Diagnostic.Multiplexer = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Multiplexer) {
@@ -54,10 +62,11 @@ class I2C {
 		void Device_RV3028C7(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_RV3028C7__, true, 1);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_RV3028C7__, true, 1);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.RTC = I2C_Device.Detect();
+			this->Network.Diagnostic.RTC = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.RTC) {
@@ -98,10 +107,11 @@ class I2C {
 		void Device_DS28C(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_DS28C__, true, 2);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_DS28C__, true, 2);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Serial_ID = I2C_Device.Detect();
+			this->Network.Diagnostic.Serial_ID = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Serial_ID) {
@@ -116,44 +126,44 @@ class I2C {
 				uint8_t _Read_Byte;
 
 				// Set DS28C to I2C Mode
-				I2C_Device.Write_Register(0x08, 0x01, false);
+				I2C_Device->Write_Register(0x08, 0x01, false);
 
 				// Send CRC  Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x07);
+				_Read_Byte = I2C_Device->Read_Register(0x07);
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 40-47 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x06);
+				_Read_Byte = I2C_Device->Read_Register(0x06);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 32-39 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x05);
+				_Read_Byte = I2C_Device->Read_Register(0x05);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 24-31 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x04);
+				_Read_Byte = I2C_Device->Read_Register(0x04);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 16-23 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x03);
+				_Read_Byte = I2C_Device->Read_Register(0x03);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 08-15 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x02);
+				_Read_Byte = I2C_Device->Read_Register(0x02);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send 00-07 bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x01);
+				_Read_Byte = I2C_Device->Read_Register(0x01);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
 				// Send Device Family bit Read Request to DS28C and read
-				_Read_Byte = I2C_Device.Read_Register(0x00);
+				_Read_Byte = I2C_Device->Read_Register(0x00);
 				_Serial = _Serial << 8;
 				_Serial |= (uint64_t)_Read_Byte;
 
@@ -185,10 +195,11 @@ class I2C {
 		void Device_HDC2010(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_HDC2010__, true, 3);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_HDC2010__, true, 3);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Environment = I2C_Device.Detect();
+			this->Network.Diagnostic.Environment = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Environment) {
@@ -221,10 +232,11 @@ class I2C {
 		void Device_MAX17055(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_MAX17055__, true, 4);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_MAX17055__, true, 4);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Gauge = I2C_Device.Detect();
+			this->Network.Diagnostic.Gauge = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Gauge) {
@@ -257,10 +269,11 @@ class I2C {
 		void Device_BQ24298(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_BQ24298__, true, 5);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_BQ24298__, true, 5);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Charger = I2C_Device.Detect();
+			this->Network.Diagnostic.Charger = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Charger) {
@@ -293,10 +306,11 @@ class I2C {
 		void Device_PCF8574_A(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_PCF8574_A__, true, 6);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_PCF8574_A__, true, 6);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Expander_A = I2C_Device.Detect();
+			this->Network.Diagnostic.Expander_A = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Expander_A) {
@@ -326,10 +340,11 @@ class I2C {
 		void Device_PCF8574_B(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_PCF8574_B__, true, 6);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_PCF8574_B__, true, 6);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Expander_B = I2C_Device.Detect();
+			this->Network.Diagnostic.Expander_B = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Expander_B) {
@@ -359,10 +374,11 @@ class I2C {
 		void Device_PCF8574_C(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_PCF8574_C__, true, 6);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_PCF8574_C__, true, 6);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Expander_C = I2C_Device.Detect();
+			this->Network.Diagnostic.Expander_C = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Expander_C) {
@@ -392,10 +408,11 @@ class I2C {
 		void Device_PCF8574_D(void) {
 
 			// Define Object
-			I2C_Functions I2C_Device(__I2C_Addr_PCF8574_D__, true, 6);
+			I2C_Functions* I2C_Device = 0;
+			I2C_Device = new I2C_Functions(__I2C_Addr_PCF8574_D__, true, 6);
 
 			// Detect I2C Device
-			this->Network.Diagnostic.Expander_D = I2C_Device.Detect();
+			this->Network.Diagnostic.Expander_D = I2C_Device->Detect();
 
 			// Control Device State
 			if (this->Network.Diagnostic.Expander_D) {
@@ -542,14 +559,15 @@ class I2C {
 
 			if (this->Network.Diagnostic.Environment) {
 
-				// Define Sensor Object
-				HDC2010 Sensor(true, 3, 5, true);
+				// Define Object
+				HDC2010* Sensor = 0;
+				Sensor = new HDC2010(true, 3, 5, true);
 
 				// Get Temperature
-				this->Network.Environment.Temperature = this->Round_2digit(Sensor.Temperature());
+				this->Network.Environment.Temperature = this->Round_2digit(Sensor->Temperature());
 
 				// Get Humidity
-				this->Network.Environment.Humidity = this->Round_2digit(Sensor.Humidity());
+				this->Network.Environment.Humidity = this->Round_2digit(Sensor->Humidity());
 
 				// Print Diagnostic
 				#ifdef TERMINAL
@@ -566,17 +584,18 @@ class I2C {
 
 			if (this->Network.Diagnostic.Gauge) {
 
-				// Create Charger Object
-				MAX17055 Battery_Gauge(true, 4);
+				// Define Object
+				MAX17055* Battery_Gauge = 0;
+				Battery_Gauge = new MAX17055(true, 4);
 
 				// Get Battery Parameters
-				this->Network.Battery.Instant_Voltage 	= Round_2digit(Battery_Gauge.Instant_Voltage());
-				this->Network.Battery.Temperature		= Round_2digit(Battery_Gauge.Temperature());
-				this->Network.Battery.Average_Current 	= Round_2digit(Battery_Gauge.Average_Current());
-				this->Network.Battery.State_Of_Charge 	= Round_2digit(Battery_Gauge.State_Of_Charge());
-				this->Network.Battery.Design_Capacity 	= Battery_Gauge.Design_Capacity();
-				this->Network.Battery.Instant_Capacity 	= Battery_Gauge.Instant_Capacity();
-				this->Network.Battery.Charge_Cycle 		= Battery_Gauge.Charge_Cycle();
+				this->Network.Battery.Instant_Voltage 	= Round_2digit(Battery_Gauge->Instant_Voltage());
+				this->Network.Battery.Temperature		= Round_2digit(Battery_Gauge->Temperature());
+				this->Network.Battery.Average_Current 	= Round_2digit(Battery_Gauge->Average_Current());
+				this->Network.Battery.State_Of_Charge 	= Round_2digit(Battery_Gauge->State_Of_Charge());
+				this->Network.Battery.Design_Capacity 	= Battery_Gauge->Design_Capacity();
+				this->Network.Battery.Instant_Capacity 	= Battery_Gauge->Instant_Capacity();
+				this->Network.Battery.Charge_Cycle 		= Battery_Gauge->Charge_Cycle();
 
 				// Terminal Update
 				#ifdef TERMINAL
@@ -598,11 +617,12 @@ class I2C {
 
 			if (this->Network.Diagnostic.Charger) {
 
-				// Create Charger Object
-				BQ24298 Charger(true, true, 5);
+				// Define Object
+				BQ24298* Charger = 0;
+				Charger = new BQ24298(true, true, 5);
 
 				// Get Charge Status
-				this->Network.Battery.Charge_Status = Charger.Charge_Status();
+				this->Network.Battery.Charge_Status = Charger->Charge_Status();
 
 			}
 
@@ -614,11 +634,12 @@ class I2C {
 			// Control I2C Device
 			if (this->Network.Diagnostic.RTC) {
 
-				// RTC Object Defination	
-				RV3028 RTC(true, 1);
+				// Define Object
+				RV3028* RTC = 0;
+				RTC = new RV3028(true, 1);
 
 				// Get UNIX
-				this->Network.Time.UNIX = RTC.Get_UNIX_Time();
+				this->Network.Time.UNIX = RTC->Get_UNIX_Time();
 
 				// Terminal Update
 				#ifdef TERMINAL
@@ -633,16 +654,17 @@ class I2C {
 			// Control I2C Device
 			if (this->Network.Diagnostic.RTC) {
 
-				// RTC Object Defination	
-				RV3028 RTC(true, 1);
+				// Define Object
+				RV3028* RTC = 0;
+				RTC = new RV3028(true, 1);
 
 				// Update Current Time Variables
-				this->Network.Time.Day 		= RTC.Get_Date();
-				this->Network.Time.Month 	= RTC.Get_Month();
-				this->Network.Time.Year 	= RTC.Get_Year();
-				this->Network.Time.Hour 	= RTC.Get_Hour();
-				this->Network.Time.Minute 	= RTC.Get_Minute();
-				this->Network.Time.Second 	= RTC.Get_Second();
+				this->Network.Time.Day 		= RTC->Get_Date();
+				this->Network.Time.Month 	= RTC->Get_Month();
+				this->Network.Time.Year 	= RTC->Get_Year();
+				this->Network.Time.Hour 	= RTC->Get_Hour();
+				this->Network.Time.Minute 	= RTC->Get_Minute();
+				this->Network.Time.Second 	= RTC->Get_Second();
 
 				// Print Time Stamp
 				#ifdef TERMINAL
@@ -672,11 +694,12 @@ class I2C {
 			// Control I2C Device
 			if (this->Network.Diagnostic.RTC) {
 
-				// RTC Object Defination	
-				RV3028 RTC(true, 1);
+				// Define Object
+				RV3028* RTC = 0;
+				RTC = new RV3028(true, 1);
 
 				// Update Time
-				RTC.Set_Time(Second, Minute, Hour, Day, Month, Year);
+				RTC->Set_Time(Second, Minute, Hour, Day, Month, Year);
 
 			}
 
@@ -686,11 +709,12 @@ class I2C {
 			// Control I2C Device
 			if (this->Network.Diagnostic.RTC) {
 
-				// RTC Object Defination	
-				RV3028 RTC(true, 1);
+				// Define Object
+				RV3028* RTC = 0;
+				RTC = new RV3028(true, 1);
 
 				// Set Timer
-				RTC.Set_Timer(true, 1, Interval, (Interval != 0 ? true : false), true, (Interval != 0 ? true : false));
+				RTC->Set_Timer(true, 1, Interval, (Interval != 0 ? true : false), true, (Interval != 0 ? true : false));
 
 			}
 
@@ -706,20 +730,21 @@ class I2C {
 			// Set Selenoid 1
 			if (_ID == 1) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_A(__I2C_Addr_PCF8574_A__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_A = 0;
+				I2C_PCF8574_A = new I2C_Functions(__I2C_Addr_PCF8574_A__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00000001, true);
+					I2C_PCF8574_A->Write_Command(0b00000001, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -729,13 +754,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00000010, true);
+					I2C_PCF8574_A->Write_Command(0b00000010, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -752,20 +777,21 @@ class I2C {
 			// Set Selenoid 2
 			if (_ID == 2) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_A(__I2C_Addr_PCF8574_A__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_A = 0;
+				I2C_PCF8574_A = new I2C_Functions(__I2C_Addr_PCF8574_A__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00000100, true);
+					I2C_PCF8574_A->Write_Command(0b00000100, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -775,13 +801,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00001000, true);
+					I2C_PCF8574_A->Write_Command(0b00001000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -798,20 +824,21 @@ class I2C {
 			// Set Selenoid 3
 			if (_ID == 3) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_A(__I2C_Addr_PCF8574_A__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_A = 0;
+				I2C_PCF8574_A = new I2C_Functions(__I2C_Addr_PCF8574_A__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00010000, true);
+					I2C_PCF8574_A->Write_Command(0b00010000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -821,13 +848,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b00100000, true);
+					I2C_PCF8574_A->Write_Command(0b00100000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -844,20 +871,21 @@ class I2C {
 			// Set Selenoid 4
 			if (_ID == 4) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_A(__I2C_Addr_PCF8574_A__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_A = 0;
+				I2C_PCF8574_A = new I2C_Functions(__I2C_Addr_PCF8574_A__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b01000000, true);
+					I2C_PCF8574_A->Write_Command(0b01000000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -867,13 +895,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_A.Write_Command(0b10000000, true);
+					I2C_PCF8574_A->Write_Command(0b10000000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_A.Write_Command(0b00000000, true);
+					I2C_PCF8574_A->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -890,20 +918,21 @@ class I2C {
 			// Set Selenoid 5
 			if (_ID == 5) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_B(__I2C_Addr_PCF8574_B__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_B = 0;
+				I2C_PCF8574_B = new I2C_Functions(__I2C_Addr_PCF8574_B__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00000001, true);
+					I2C_PCF8574_B->Write_Command(0b00000001, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -913,13 +942,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00000010, true);
+					I2C_PCF8574_B->Write_Command(0b00000010, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -936,20 +965,21 @@ class I2C {
 			// Set Selenoid 6
 			if (_ID == 6) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_B(__I2C_Addr_PCF8574_B__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_B = 0;
+				I2C_PCF8574_B = new I2C_Functions(__I2C_Addr_PCF8574_B__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00000100, true);
+					I2C_PCF8574_B->Write_Command(0b00000100, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -959,13 +989,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00001000, true);
+					I2C_PCF8574_B->Write_Command(0b00001000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -982,20 +1012,21 @@ class I2C {
 			// Set Selenoid 7
 			if (_ID == 7) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_B(__I2C_Addr_PCF8574_B__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_B = 0;
+				I2C_PCF8574_B = new I2C_Functions(__I2C_Addr_PCF8574_B__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00010000, true);
+					I2C_PCF8574_B->Write_Command(0b00010000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1005,13 +1036,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b00100000, true);
+					I2C_PCF8574_B->Write_Command(0b00100000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1028,20 +1059,21 @@ class I2C {
 			// Set Selenoid 8
 			if (_ID == 8) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_B(__I2C_Addr_PCF8574_B__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_B = 0;
+				I2C_PCF8574_B = new I2C_Functions(__I2C_Addr_PCF8574_B__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b01000000, true);
+					I2C_PCF8574_B->Write_Command(0b01000000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1051,13 +1083,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_B.Write_Command(0b10000000, true);
+					I2C_PCF8574_B->Write_Command(0b10000000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_B.Write_Command(0b00000000, true);
+					I2C_PCF8574_B->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1074,20 +1106,21 @@ class I2C {
 			// Set Selenoid 9
 			if (_ID == 9) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_C(__I2C_Addr_PCF8574_C__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_C = 0;
+				I2C_PCF8574_C = new I2C_Functions(__I2C_Addr_PCF8574_C__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00000001, true);
+					I2C_PCF8574_C->Write_Command(0b00000001, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1097,13 +1130,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00000010, true);
+					I2C_PCF8574_C->Write_Command(0b00000010, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1120,20 +1153,21 @@ class I2C {
 			// Set Selenoid 10
 			if (_ID == 10) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_C(__I2C_Addr_PCF8574_C__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_C = 0;
+				I2C_PCF8574_C = new I2C_Functions(__I2C_Addr_PCF8574_C__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00000100, true);
+					I2C_PCF8574_C->Write_Command(0b00000100, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1143,13 +1177,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00001000, true);
+					I2C_PCF8574_C->Write_Command(0b00001000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1166,20 +1200,21 @@ class I2C {
 			// Set Selenoid 11
 			if (_ID == 11) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_C(__I2C_Addr_PCF8574_C__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_C = 0;
+				I2C_PCF8574_C = new I2C_Functions(__I2C_Addr_PCF8574_C__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00010000, true);
+					I2C_PCF8574_C->Write_Command(0b00010000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1189,13 +1224,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b00100000, true);
+					I2C_PCF8574_C->Write_Command(0b00100000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1212,20 +1247,21 @@ class I2C {
 			// Set Selenoid 12
 			if (_ID == 12) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_C(__I2C_Addr_PCF8574_C__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_C = 0;
+				I2C_PCF8574_C = new I2C_Functions(__I2C_Addr_PCF8574_C__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b01000000, true);
+					I2C_PCF8574_C->Write_Command(0b01000000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1235,13 +1271,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_C.Write_Command(0b10000000, true);
+					I2C_PCF8574_C->Write_Command(0b10000000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_C.Write_Command(0b00000000, true);
+					I2C_PCF8574_C->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1258,20 +1294,21 @@ class I2C {
 			// Set Selenoid 13
 			if (_ID == 13) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_D(__I2C_Addr_PCF8574_D__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_D = 0;
+				I2C_PCF8574_D = new I2C_Functions(__I2C_Addr_PCF8574_D__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00000001, true);
+					I2C_PCF8574_D->Write_Command(0b00000001, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1281,13 +1318,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00000010, true);
+					I2C_PCF8574_D->Write_Command(0b00000010, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1304,20 +1341,21 @@ class I2C {
 			// Set Selenoid 14
 			if (_ID == 14) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_D(__I2C_Addr_PCF8574_D__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_D = 0;
+				I2C_PCF8574_D = new I2C_Functions(__I2C_Addr_PCF8574_D__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00000100, true);
+					I2C_PCF8574_D->Write_Command(0b00000100, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1327,13 +1365,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00001000, true);
+					I2C_PCF8574_D->Write_Command(0b00001000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1350,20 +1388,21 @@ class I2C {
 			// Set Selenoid 15
 			if (_ID == 15) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_D(__I2C_Addr_PCF8574_D__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_D = 0;
+				I2C_PCF8574_D = new I2C_Functions(__I2C_Addr_PCF8574_D__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00010000, true);
+					I2C_PCF8574_D->Write_Command(0b00010000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1373,13 +1412,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b00100000, true);
+					I2C_PCF8574_D->Write_Command(0b00100000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1396,20 +1435,21 @@ class I2C {
 			// Set Selenoid 16
 			if (_ID == 16) {
 
-				// Set Object
-				I2C_Functions I2C_PCF8574_D(__I2C_Addr_PCF8574_D__, true, 6);
+				// Define Object
+				I2C_Functions* I2C_PCF8574_D = 0;
+				I2C_PCF8574_D = new I2C_Functions(__I2C_Addr_PCF8574_D__, true, 6);
 
 				// Set State
 				if (!_State) {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b01000000, true);
+					I2C_PCF8574_D->Write_Command(0b01000000, true);
 
 					// On Delay
 					delay(OFF_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
@@ -1419,13 +1459,13 @@ class I2C {
 				} else {
 
 					// Set I/O State
-					I2C_PCF8574_D.Write_Command(0b10000000, true);
+					I2C_PCF8574_D->Write_Command(0b10000000, true);
 
 					// On Delay
 					delay(ON_Time);
 
 					// Clear I/O State
-					I2C_PCF8574_D.Write_Command(0b00000000, true);
+					I2C_PCF8574_D->Write_Command(0b00000000, true);
 
 					// Print Diagnostic
 					#ifdef TERMINAL
