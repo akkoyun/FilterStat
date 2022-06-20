@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #endif
 
-// Include PowerStat Definitions
+// Include PowerStat Definitions 
 #include "Definition.h"
 #include "Parameters.h"
 
